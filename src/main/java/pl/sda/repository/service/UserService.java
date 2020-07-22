@@ -5,6 +5,7 @@ import pl.sda.repository.SdaUser;
 import pl.sda.repository.dao.UserDao;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -17,6 +18,10 @@ public class UserService {
 
     public List<SdaUser> getAllUsers(){
         return userDao.readAllUsers();
+    }
+
+    public Optional<SdaUser> getUserByPesel(String userPesel){
+        return userDao.findUserByPesel(userPesel);
     }
 
 

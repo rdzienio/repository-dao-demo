@@ -61,9 +61,21 @@ public class UserDao {
     public Optional<SdaUser> findUserByPesel(String userPesel) {
         log.info("Finding user with pesel: {}", userPesel);
         //SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("pesel", userPesel);
-        Optional<SdaUser> result = Optional.ofNullable(jdbcTemplate.queryForObject("select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?", new Object[]{userPesel}, new UserRowMapper()));
-        log.info("Found user: [{}]", result);
-        return result;
+/*        Optional<SdaUser> result = Optional.ofNullable(jdbcTemplate.queryForObject(
+                "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?",
+                new Object[]{userPesel}, new UserRowMapper()));*/
+        Optional<List<SdaUser>> resultList = Optional.ofNullable(jdbcTemplate.query(
+                "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?",
+                new Object[]{userPesel}, new UserRowMapper()));
+        if (resultList.get().size()>0) {
+            var result = resultList.get().get(0);
+            log.info("Found user: [{}]", result);
+            return Optional.ofNullable(result);
+        }
+        else {
+            return Optional.empty();
+        }
+
     }
 
     public boolean removeUserByPesel(String userPesel) {
