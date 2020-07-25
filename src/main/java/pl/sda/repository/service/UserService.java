@@ -20,8 +20,12 @@ public class UserService {
         return userDao.readAllUsers();
     }
 
-    public Optional<SdaUser> getUserByPesel(String userPesel){
-        return userDao.findUserByPesel(userPesel);
+    public SdaUser getUserByPesel(String userPesel){
+        return userDao.findUserByPesel(userPesel).orElse(new SdaUser());
+    }
+
+    public SdaUser saveUser(SdaUser sdaUser){
+        return userDao.saveUser(sdaUser);
     }
 
 

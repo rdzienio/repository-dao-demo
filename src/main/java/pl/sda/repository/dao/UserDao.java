@@ -16,6 +16,8 @@ import java.util.Optional;
 @Repository
 public class UserDao {
 
+    private static final String SELECT_ALL_QUERY = "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER";
+
     private final JdbcTemplate jdbcTemplate;
 
     public UserDao(final JdbcTemplate jdbcTemplate) {
@@ -32,9 +34,7 @@ public class UserDao {
                     sdaUser.getAssignedCourse(),
                     sdaUser.getPesel(),
                     sdaUser.isPayed());
-        }
-        else
-        {
+        } else {
             jdbcTemplate.update("update SDA_USER set NAME = ?, ASSIGNED_COURSE = ?, PRICE = ?, PAYED = ? where PESEL = ?",
                     sdaUser.getName(),
                     sdaUser.getAssignedCourse(),
@@ -47,13 +47,13 @@ public class UserDao {
     }
 
     public List<SdaUser> readAllUsers() {
-
-        List<SdaUser> result = jdbcTemplate.query("select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER",
+        List<SdaUser> result = jdbcTemplate.query(SELECT_ALL_QUERY, new UserRowMapper());
+        /*        List<SdaUser> result = jdbcTemplate.query(SELECT_ALL_QUERY,
                 (rs, num) -> new SdaUser(rs.getString("pesel"),
                         rs.getString("name"),
                         rs.getString("ASSIGNED_COURSE"),
                         rs.getDouble("price"),
-                        rs.getBoolean("payed")));
+                        rs.getBoolean("payed")));*/
         log.info("readAllUsers [{}]", result);
         return result;
     }
@@ -65,14 +65,13 @@ public class UserDao {
                 "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?",
                 new Object[]{userPesel}, new UserRowMapper()));*/
         Optional<List<SdaUser>> resultList = Optional.ofNullable(jdbcTemplate.query(
-                "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?",
+                SELECT_ALL_QUERY + " where PESEL = ?",
                 new Object[]{userPesel}, new UserRowMapper()));
-        if (resultList.get().size()>0) {
+        if (resultList.get().size() > 0) {
             var result = resultList.get().get(0);
             log.info("Found user: [{}]", result);
             return Optional.ofNullable(result);
-        }
-        else {
+        } else {
             return Optional.empty();
         }
 
@@ -85,10 +84,9 @@ public class UserDao {
             jdbcTemplate.update("delete from SDA_USER where PESEL = ?", userPesel);
             log.info("User with pesel [{}] removed from database!", userPesel);
             return true;
-        }
-        else
+        } else
             log.warn("Nothing to remove!");
-            return false;
+        return false;
 
     }
 }
