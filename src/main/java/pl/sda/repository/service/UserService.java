@@ -5,7 +5,6 @@ import pl.sda.repository.SdaUser;
 import pl.sda.repository.dao.UserDao;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -26,6 +25,10 @@ public class UserService {
 
     public SdaUser saveUser(SdaUser sdaUser){
         return userDao.saveUser(sdaUser);
+    }
+
+    public SdaUser getUserByPeselAndName(String userPesel, String userName){
+        return userDao.findUserByPeselAndName(userPesel, userName).orElse(new SdaUser());
     }
 
 

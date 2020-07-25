@@ -1,15 +1,12 @@
 package pl.sda.repository.dao;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 import pl.sda.repository.SdaUser;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -17,6 +14,7 @@ import java.util.Optional;
 public class UserDao {
 
     private static final String SELECT_ALL_QUERY = "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER";
+    private static final String USER_SELECT_QUERY = SELECT_ALL_QUERY + " where PESEL = ?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -48,33 +46,28 @@ public class UserDao {
 
     public List<SdaUser> readAllUsers() {
         List<SdaUser> result = jdbcTemplate.query(SELECT_ALL_QUERY, new UserRowMapper());
-        /*        List<SdaUser> result = jdbcTemplate.query(SELECT_ALL_QUERY,
-                (rs, num) -> new SdaUser(rs.getString("pesel"),
-                        rs.getString("name"),
-                        rs.getString("ASSIGNED_COURSE"),
-                        rs.getDouble("price"),
-                        rs.getBoolean("payed")));*/
         log.info("readAllUsers [{}]", result);
         return result;
     }
 
+    public Optional<SdaUser> findUserByPeselAndName(String userPesel, String userName) {
+        var result = jdbcTemplate.queryForObject(USER_SELECT_QUERY + " and name = ?", new UserRowMapper(), userPesel, userName);
+        return Optional.of(result);
+    }
+
     public Optional<SdaUser> findUserByPesel(String userPesel) {
         log.info("Finding user with pesel: {}", userPesel);
-        //SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("pesel", userPesel);
-/*        Optional<SdaUser> result = Optional.ofNullable(jdbcTemplate.queryForObject(
-                "select PESEL, NAME, ASSIGNED_COURSE, PRICE, PAYED from SDA_USER where PESEL = ?",
-                new Object[]{userPesel}, new UserRowMapper()));*/
-        Optional<List<SdaUser>> resultList = Optional.ofNullable(jdbcTemplate.query(
-                SELECT_ALL_QUERY + " where PESEL = ?",
-                new Object[]{userPesel}, new UserRowMapper()));
-        if (resultList.get().size() > 0) {
-            var result = resultList.get().get(0);
-            log.info("Found user: [{}]", result);
-            return Optional.ofNullable(result);
-        } else {
+        SdaUser result;
+        try {
+            result = jdbcTemplate.queryForObject(
+                    USER_SELECT_QUERY,
+                    new UserRowMapper(), userPesel);
+        } catch (DataAccessException dae) {
+            log.warn("User not found! {}", dae.getMessage());
             return Optional.empty();
         }
-
+        log.info("Found user: [{}]", result);
+        return Optional.ofNullable(result);
     }
 
     public boolean removeUserByPesel(String userPesel) {
