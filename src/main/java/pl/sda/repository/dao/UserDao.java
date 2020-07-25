@@ -51,8 +51,17 @@ public class UserDao {
     }
 
     public Optional<SdaUser> findUserByPeselAndName(String userPesel, String userName) {
-        var result = jdbcTemplate.queryForObject(USER_SELECT_QUERY + " and name = ?", new UserRowMapper(), userPesel, userName);
-        return Optional.of(result);
+        log.info("Finding user with pesel: {} and name: {}", userPesel, userName);
+        SdaUser result;
+        try {
+            result = jdbcTemplate.queryForObject(USER_SELECT_QUERY + " and name = ?", new UserRowMapper(), userPesel, userName);
+
+        } catch (DataAccessException dae) {
+            log.warn("User not found! " + dae.getCause());
+            return Optional.empty();
+        }
+        log.info("User found: [{}]", result);
+        return Optional.ofNullable(result);
     }
 
     public Optional<SdaUser> findUserByPesel(String userPesel) {
@@ -63,7 +72,7 @@ public class UserDao {
                     USER_SELECT_QUERY,
                     new UserRowMapper(), userPesel);
         } catch (DataAccessException dae) {
-            log.warn("User not found! {}", dae.getMessage());
+            log.warn("User not found! " + dae.getCause());
             return Optional.empty();
         }
         log.info("Found user: [{}]", result);
